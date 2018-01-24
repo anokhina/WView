@@ -9,9 +9,11 @@ import android.os.Build;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
 import android.webkit.JavascriptInterface;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
@@ -33,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
 
     private WebView wview;
     private Button buttonGo;
-    private EditText etextUrl;
+    private SearchView etextUrl;
 
     private ValueCallback<Uri[]> mUploadMessage;
     private ValueCallback<Uri> mUploadMessageUno;
@@ -99,11 +101,12 @@ public class MainActivity extends AppCompatActivity {
 
         wview = (WebView) findViewById(R.id.webview);
         buttonGo = (Button) findViewById(R.id.button);
-        etextUrl = (EditText) findViewById(R.id.editText);
+        etextUrl = (SearchView) findViewById(R.id.editText);
 
         //webSettings
         WebSettings ws = wview.getSettings();
         ws.setJavaScriptEnabled(true);
+        wview.addJavascriptInterface(new JavaScript2AndroidBridge(this), "JS2Android");
         ws.setJavaScriptCanOpenWindowsAutomatically(true);
         ws.setDatabaseEnabled(true);
         ws.setAllowFileAccess(true);
@@ -152,12 +155,12 @@ public class MainActivity extends AppCompatActivity {
         final WebViewClient wviewClient = new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                etextUrl.setText(url);
+                etextUrl.setQuery(url, false);
                 super.onPageStarted(view, url, favicon);
             }
             @Override
             public void onPageFinished(WebView view, String url) {
-                etextUrl.setText(url);
+                etextUrl.setQuery(url, false);
                 //view.loadUrl("javascript:window.android.onUrlChange(window.location.href);");
                 super.onPageFinished(view, url);
             }
@@ -264,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
         buttonGo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String url = etextUrl.getText().toString();
+                String url = etextUrl.getQuery().toString();
                 if (!zzz(url)) {
                     wview.loadUrl(url);
                 }
@@ -295,5 +298,18 @@ public class MainActivity extends AppCompatActivity {
 //        case KeyEvent.KEYCODE_MENU:
 //        webView.loadUrl("javascript:open_menu()");
         return super.onKeyDown(keyCode, event);
+    }
+
+    public static class JavaScript2AndroidBridge {
+        Context mContext;
+
+        public JavaScript2AndroidBridge(Context c) {
+            mContext = c;
+        }
+
+        @android.webkit.JavascriptInterface
+        public void sendMsgToAndroid(String msg) {
+            Log.d("zzz", msg);
+        }
     }
 }
